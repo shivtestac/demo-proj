@@ -1,0 +1,15 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    permissions:
+      id-token: write
+      contents: read
+    uses: shivtestac/platform-pipelines/.github/workflows/deploy.yml@main
+    with:
+      team: Team-a
+      app_name: app1

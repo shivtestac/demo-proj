@@ -1,0 +1,68 @@
+name: Shared Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      team:
+        required: true
+        type: string
+      app_name:
+        required: true
+        type: string
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Client App Code
+        uses: actions/checkout@v3
+
+      - name: Checkout Platform Manifests
+        uses: actions/checkout@v3
+        with:
+          repository: shivtestac/platform-pipelines
+          path: platform-tools 
+      - name: Set Lowercase Team
+        id: var
+        run: |
+          # This takes "Team-A" and turns it into "team-a"
+          TEAM_LOWER=$(echo "${{ inputs.team }}" | tr '[:upper:]' '[:lower:]')
+          echo "team_lower=${TEAM_LOWER}" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::268474204974:role/${{ steps.var.outputs.team_lower }}-eks-deployer
+          aws-region: eu-central-1
+
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Image
+        env:
+          ECR_REGISTRY: 268474204974.dkr.ecr.eu-central-1.amazonaws.com
+          REPO: ${{ steps.var.outputs.team_lower }}/${{ inputs.app_name }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws ecr describe-repositories --repository-names $REPO || aws ecr create-repository --repository-name $REPO
+          docker build -t $ECR_REGISTRY/$REPO:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$REPO:$IMAGE_TAG
+          echo "FINAL_IMAGE=$ECR_REGISTRY/$REPO:$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Update Kubeconfig
+        run: aws eks update-kubeconfig --region eu-central-1 --name shiv-dev
+
+      - name: Prepare Manifest and Deploy
+        run: |
+          # We look inside 'platform-tools/k8s/' now!
+          sed -i "s|APP_NAME|${{ inputs.app_name }}|g" platform-tools/k8s/deployment-template.yaml
+          sed -i "s|TEAM_NAMESPACE|${{ steps.var.outputs.team_lower }}|g" platform-tools/k8s/deployment-template.yaml
+          sed -i "s|IMAGE_PLACEHOLDER|${{ env.FINAL_IMAGE }}|g" platform-tools/k8s/deployment-template.yaml
+          
+          kubectl apply -f platform-tools/k8s/deployment-template.yaml

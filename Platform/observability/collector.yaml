@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-config
+  namespace: observability
+data:
+  otel.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch:
+
+    exporters:
+      otlp_http:
+        endpoint: "https://otlp.nr-data.net"
+        headers:
+          api-key: "Enter Your NewRelic license ingest api key"
+        compression: gzip
+
+      debug:
+        verbosity: detailed
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http, debug]
+
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http, debug]
+
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http, debug]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel
+  template:
+    metadata:
+      labels:
+        app: otel
+    spec:
+      containers:
+        - name: otel
+          image: otel/opentelemetry-collector-contrib:latest
+          args: ["--config=/conf/otel.yaml"]
+          ports:                  # ADD THIS SECTION
+            - containerPort: 4317
+            - containerPort: 4318
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+            - name: varlog
+              mountPath: /var/log
+      volumes:
+        - name: config
+          configMap:
+            name: otel-config
+        - name: varlog
+          hostPath:
+            path: /var/log
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: observability
+spec:
+  selector:
+    app: otel
+  ports:
+    - port: 4317
+      name: grpc
+      targetPort: 4317
+    - port: 4318
+      name: http
+      targetPort: 4318

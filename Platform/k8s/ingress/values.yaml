@@ -1,0 +1,21 @@
+providers:
+  kubernetesGateway:
+    enabled: true
+
+service:
+  type: LoadBalancer
+  spec:
+    loadBalancerIP: 136.116.244.237
+
+ports:
+  web:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+
+  websecure:
+    port: 8443
+    expose:
+      default: true
+    exposedPort: 443

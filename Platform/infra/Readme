@@ -1,0 +1,28 @@
+# Platform Pipelines Terraform Setup
+
+This repository manages the AWS infrastructure for our platform, including **VPC, EKS clusters, IAM roles, and
+Kubernetes namespaces** using Terraform.
+
+
+1. **Manual Namespace Management**  
+   - Team namespaces are created **manually via the `teams` variable**.  
+   - This ensures that no existing namespace is accidentally overridden.  
+   - Terraform only manages namespaces explicitly listed in the variable.
+
+2. **IAM Role Binding and Namespace Restriction**  
+   - Each team receives a **dedicated IAM role** for deploying workloads.  
+   - Roles are **bound to specific Kubernetes namespaces**, preventing cross-team access.  
+   - Role naming is consistent and follows the pattern:  
+     <team-name>-eks-deployer
+
+3. **GitHub OIDC Authentication**  
+   - A **single GitHub account** is trusted.  
+   - All repositories under this account can assume the IAM roles via OIDC tokens.  
+   - This setup ensures secure, identity-based access without storing static credentials.
+
+
+
+
+terraform init
+terraform apply -target=module.vpc -target=module.eks -auto-approve
+terraform apply -auto-approve
