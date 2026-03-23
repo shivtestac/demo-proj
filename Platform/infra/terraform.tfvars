@@ -1,7 +1,6 @@
 cluster_name = "shiv"
 environment  = "dev"
 
-github_org    = "shivtestac"
 github_branch = "main"
 vpc_name = "shiv"
 
