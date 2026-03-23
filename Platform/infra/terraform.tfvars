@@ -5,7 +5,7 @@ github_branch = "main"
 vpc_name = "shiv"
 
 team_config = {
-  "team-a" = "shivtestac/app1-repo"
+  "team-a" = "shivtestac/Team-a"
   "team-b" = "other-org/app2-repo"
   "team-c" = "external-user/project-x"
 }
