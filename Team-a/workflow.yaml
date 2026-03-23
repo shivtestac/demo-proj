@@ -1,4 +1,4 @@
-name: Deploy
+name: Team A Deploy
 
 on:
   push:
@@ -6,10 +6,12 @@ on:
 
 jobs:
   deploy:
+    # --- ADD THESE THREE LINES ---
     permissions:
       id-token: write
       contents: read
-    uses: shivtestac/platform-pipelines/.github/workflows/deploy.yml@main
+    # -----------------------------
+    uses: shivtestac/demo-proj/.github/workflows/deploy.yml@main
     with:
       team: Team-a
       app_name: app1

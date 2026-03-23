@@ -191,6 +191,46 @@ resource "kubernetes_role_binding" "team_bindings" {
 }
 
 
+
+
+
+resource "kubernetes_role" "gateway_access" {
+  for_each = var.team_config
+
+  metadata {
+    name      = "gateway-access"
+    namespace = each.key
+  }
+
+  rule {
+    api_groups = ["gateway.networking.k8s.io"]
+    resources  = ["httproutes"]
+    verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
+  }
+}
+
+
+resource "kubernetes_role_binding" "gateway_binding" {
+  for_each = var.team_config
+
+  metadata {
+    name      = "gateway-binding"
+    namespace = each.key
+  }
+
+  subject {
+    kind      = "Group"
+    name      = "group-${each.key}"
+    api_group = "rbac.authorization.k8s.io"
+  }
+
+  role_ref {
+    kind      = "Role"
+    name      = kubernetes_role.gateway_access[each.key].metadata[0].name
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+
 resource "kubernetes_namespace" "obs" {
   metadata { name = "observability" }
   depends_on = [module.eks]
