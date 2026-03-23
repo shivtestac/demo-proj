@@ -108,10 +108,10 @@ resource "aws_iam_openid_connect_provider" "github" {
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
-
 resource "aws_iam_role" "team_roles" {
-  for_each = toset(var.teams)
-  name     = "${each.value}-eks-deployer"
+  for_each = var.team_config # <--- Use the map
+  name     = "${each.key}-eks-deployer"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -120,20 +120,18 @@ resource "aws_iam_role" "team_roles" {
       Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
       Condition = {
         StringLike = {
-          "token.actions.githubusercontent.com:sub": "repo:${var.github_org}/*"
+          # 🔥 Now uses the repo path from the map value
+          "token.actions.githubusercontent.com:sub": "repo:${each.value}:*"
         }
       }
     }]
   })
 }
 
-
-
-
-# ADDED: ECR & EKS permissions for the IAM roles
+# RESTORED: Full ECR & EKS permissions
 resource "aws_iam_role_policy" "team_permissions" {
-  for_each = toset(var.teams) # Use the variable here
-  name     = "${each.value}-base-permissions"
+  for_each = var.team_config 
+  name     = "${each.key}-base-permissions"
   role     = aws_iam_role.team_roles[each.key].id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -165,32 +163,30 @@ resource "aws_iam_role_policy" "team_permissions" {
 
 # --- 4. Cluster Bridge (Access Entries) ---
 resource "aws_eks_access_entry" "team_entries" {
-  for_each      = toset(var.teams) # Use the variable here
+  for_each      = var.team_config
   cluster_name  = module.eks.cluster_name
   principal_arn = aws_iam_role.team_roles[each.key].arn
-  kubernetes_groups = ["group-${each.value}"]
+  kubernetes_groups = ["group-${each.key}"]
   type          = "STANDARD"
-  depends_on = [module.eks]
-
+  depends_on    = [module.eks]
 }
 
 # --- 5. Namespace Isolation (K8s RBAC) ---
 resource "kubernetes_namespace" "teams" {
-  for_each = toset(var.teams) # Use the variable here
-  metadata { name = each.value }
+  for_each = var.team_config
+  metadata { name = each.key } 
   depends_on = [module.eks]
-
 }
 
 resource "kubernetes_role_binding" "team_bindings" {
-  for_each = toset(var.teams) # Use the variable here
+  for_each = var.team_config
   metadata {
-    name      = "${each.value}-mgr"
+    name      = "${each.key}-mgr"
     namespace = kubernetes_namespace.teams[each.key].metadata[0].name
   }
   subject {
     kind      = "Group"
-    name      = "group-${each.value}"
+    name      = "group-${each.key}"
     api_group = "rbac.authorization.k8s.io"
   }
   role_ref {
@@ -199,8 +195,8 @@ resource "kubernetes_role_binding" "team_bindings" {
     api_group = "rbac.authorization.k8s.io"
   }
   depends_on = [module.eks]
-
 }
+
 
 resource "kubernetes_namespace" "obs" {
   metadata { name = "observability" }
