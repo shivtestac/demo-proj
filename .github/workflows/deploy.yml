@@ -68,6 +68,6 @@ jobs:
           # We look inside 'platform-tools/k8s/' now!
           sed -i "s|APP_NAME|${{ inputs.app_name }}|g" Platform/k8s/deployment-template.yaml
           sed -i "s|TEAM_NAMESPACE|${{ steps.var.outputs.team_lower }}|g" Platform/k8s/deployment-template.yaml
-          sed -i "s|IMAGE_PLACEHOLDER|${{ env.FINAL_IMAGE }}|g" Platform/k8s/k8s/deployment-template.yaml
+          sed -i "s|IMAGE_PLACEHOLDER|${{ env.FINAL_IMAGE }}|g" Platform/k8s/deployment-template.yaml
           
           kubectl apply -f Platform/k8s/deployment-template.yaml
