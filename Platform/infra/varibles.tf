@@ -1,9 +1,3 @@
-variable "teams" {
-  description = "List of teams to create namespaces and roles for"
-  type        = list(string)
-  default     = ["team-a", "team-b"]
-}
-
 variable "team_config" {
   type = map(string)
   description = "Map of team name to their GitHub repository (org/repo)"
