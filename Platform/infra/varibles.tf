@@ -58,9 +58,7 @@ variable "max_size" {
 }
 
 
-variable "github_org" {
-  description = "GitHub organization"
-}
+
 
 variable "github_branch" {
   description = "Allowed branch"
