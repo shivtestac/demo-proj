@@ -4,10 +4,6 @@ variable "team_config" {
 }
 
 variable "region" {
-  default = "eu-central-1"
-}
-# ... add other variables as needed
-variable "region" {
   description = "AWS region"
   default     = "eu-central-1"
 }

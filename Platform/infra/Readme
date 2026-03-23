@@ -22,7 +22,6 @@ Kubernetes namespaces** using Terraform.
 
 
 
-
-terraform init
+terraform init -backend-config=backend.hcl
 terraform apply -target=module.vpc -target=module.eks -auto-approve
 terraform apply -auto-approve

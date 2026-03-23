@@ -1,14 +1,7 @@
 #backend
 terraform {
-  backend "s3" {
-    bucket       = var.backend_bucket
-    key          = var.backend_key
-    region       = var.region
-    encrypt      = true
-    use_lockfile = true
-  }
+  backend "s3" {}
 }
-
 
 
 # --- Provider Configuration ---
