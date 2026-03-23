@@ -21,6 +21,11 @@ jobs:
       - name: Checkout Client App Code
         uses: actions/checkout@v3
 
+      - name: Checkout Platform Repo
+        uses: actions/checkout@v3
+        with:
+          repository: shivtestac/demo-proj
+          path: platform
       - name: Debug Workspace
         run: |
           echo "Current directory:"
@@ -66,8 +71,8 @@ jobs:
       - name: Prepare Manifest and Deploy
         run: |
           # We look inside 'platform-tools/k8s/' now!
-          sed -i "s|APP_NAME|${{ inputs.app_name }}|g" Platform/k8s/deployment-template.yaml
-          sed -i "s|TEAM_NAMESPACE|${{ steps.var.outputs.team_lower }}|g" Platform/k8s/deployment-template.yaml
-          sed -i "s|IMAGE_PLACEHOLDER|${{ env.FINAL_IMAGE }}|g" Platform/k8s/deployment-template.yaml
+          sed -i "s|APP_NAME|${{ inputs.app_name }}|g" platform/Platform/k8s/deployment-template.yaml
+          sed -i "s|TEAM_NAMESPACE|${{ steps.var.outputs.team_lower }}|g" platform/Platform/k8s/deployment-template.yaml
+          sed -i "s|IMAGE_PLACEHOLDER|${{ env.FINAL_IMAGE }}|g" platform/Platform/k8s/deployment-template.yaml
           
-          kubectl apply -f Platform/k8s/deployment-template.yaml
+          kubectl apply -f platform/Platform/k8s/deployment-template.yaml
