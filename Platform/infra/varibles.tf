@@ -4,6 +4,15 @@ variable "teams" {
   default     = ["team-a", "team-b"]
 }
 
+variable "team_config" {
+  type = map(string)
+  description = "Map of team name to their GitHub repository (org/repo)"
+}
+
+variable "region" {
+  default = "eu-central-1"
+}
+# ... add other variables as needed
 variable "region" {
   description = "AWS region"
   default     = "eu-central-1"
